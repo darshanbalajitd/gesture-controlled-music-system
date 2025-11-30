@@ -19,6 +19,12 @@ except Exception as e:
     print('  pip install mediapipe==0.10.14 protobuf==3.20.*')
     raise
 
+try:
+    from google.protobuf import __version__ as _pb_ver
+    if int(_pb_ver.split('.')[0]) >= 4:
+        print('protobuf>=4 detected; install mediapipe==0.10.14 protobuf==3.20.*')
+except Exception:
+    pass
 
 # ===================== MLP MODEL =====================
 
@@ -358,6 +364,7 @@ def main():
         total_frames += 1
         text = 'no hand'
         conf = 0.0
+        infer_time = 0.0
 
         # ---------- Feature extraction ----------
         feat = extract_features(frame, hands)
@@ -367,9 +374,15 @@ def main():
             x = scaler.transform(feat.reshape(1, -1)).astype(np.float32)
             xb = torch.from_numpy(x).to(device)
 
+            start_inf = time.time()  # <--- START LATENCY TIMER
+
             with torch.no_grad():
                 logits = model(xb)
+
+                infer_time = (time.time() - start_inf) * 1000  # <--- LATENCY (ms)
+
                 p = torch.softmax(logits, dim=1)[0]
+
                 idx = int(torch.argmax(p).item())
                 conf = float(p[idx].item())
 
@@ -438,7 +451,8 @@ def main():
         # ---------- UI overlay ----------
         conf_hist.append(conf)
         mean_conf = float(np.mean(conf_hist)) if conf_hist else 0.0
-
+        cv2.putText(frame, f'latency={infer_time:.2f}ms', (10, 120),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
         cv2.putText(frame, text, (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
         cv2.putText(frame, f'mean_p={mean_conf:.2f}', (10, 60),

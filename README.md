@@ -127,6 +127,10 @@ A gesture-based project that detects static hand gestures from images and uses t
   - Applies stability and thresholding, then plays prompt audio and triggers music actions.
   - Stability: gestures are detected once per 8-frame window and a 5-second timeout prevents repeated triggers.
 
+## Performance
+- Latency: less than 1 ms on Windows; less than 7 ms on Raspberry Pi 5.
+- Accuracy: achieved ~97% validation accuracy at epoch 30.
+
 ## Notes
 - Ensure required Python packages are installed (OpenCV, MediaPipe, PyTorch, scikit-learn, pandas, tqdm, joblib, python-vlc).
 - If MediaPipe import errors occur due to protobuf version mismatch, install compatible versions:
